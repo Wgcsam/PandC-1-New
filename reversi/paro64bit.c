@@ -706,7 +706,7 @@ int parallelSearch (int *totalExplored, int *move,
 	      move_score = alphaBeta (l[i], c, u, noPlies, o, minscore, maxscore);
 	      // printf ("%d\n", move_score);
 	      //pass move_score, i, positionsExplored back via mailbox
-	      mailbox_send (barrier, move_score, (i + 1), positionsExplored);
+	      mailbox_send (barrier, move_score, i, positionsExplored);
 	      multiprocessor_signal (processorAvailable);
 	      exit(0);
 	    }
