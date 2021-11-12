@@ -15,13 +15,13 @@ static mailbox *freelist = NULL;  /* list of free mailboxes.  */
 
 static mailbox *mailbox_config (mailbox *mbox, mailbox *prev)
 {
-  //mbox->data.result = 0;
-  //mbox->data.move_no = 0;
-  //mbox->data.positions_explored = 0;
-  mbox->prev = prev;
-  mbox->item_available = multiprocessor_initSem (0);
-  mbox->space_available = multiprocessor_initSem (MAX_MAILBOX_DATA);
-  mbox->mutex = multiprocessor_initSem (1);
+  //mbox->data.result = 0; 		/* deprecated */
+  //mbox->data.move_no = 0;		/* deprecated */
+  //mbox->data.positions_explored = 0;	/* deprecated */
+  mbox->prev = prev;							/* enables selection of previous mailbox */
+  mbox->item_available = multiprocessor_initSem (0);			/* initializing semaphore */
+  mbox->space_available = multiprocessor_initSem (MAX_MAILBOX_DATA);	/* initializing semaphore */
+  mbox->mutex = multiprocessor_initSem (1);				/* initializing semaphore */
   mbox->in = 0;
   mbox->out = 0;
   return mbox;
@@ -90,15 +90,15 @@ mailbox *mailbox_kill (mailbox *mbox)
 
 void mailbox_send (mailbox *mbox, int result, int move_no, int positions_explored)
 {
-  multiprocessor_wait (mbox->space_available);
-  multiprocessor_wait (mbox->mutex);
+  multiprocessor_wait (mbox->space_available); 				/* wait for space available semaphore */
+  multiprocessor_wait (mbox->mutex);					/* wait for mutex semaphore */
   //add item to buffer
-  mbox->data[mbox->in].result = result;
-  mbox->data[mbox->in].move_no = move_no;
-  mbox->data[mbox->in].positions_explored = positions_explored;
-  mbox->in = (mbox->in + 1) % MAX_MAILBOX_DATA;
-  multiprocessor_signal (mbox->mutex);
-  multiprocessor_signal (mbox->item_available);
+  mbox->data[mbox->in].result = result;					/* add result to buffer */
+  mbox->data[mbox->in].move_no = move_no;				/* add move_no to buffer */
+  mbox->data[mbox->in].positions_explored = positions_explored;		/* add positions_explored to buffer */
+  mbox->in = (mbox->in + 1) % MAX_MAILBOX_DATA;				/* increment in upto 100 and reset */
+  multiprocessor_signal (mbox->mutex);					/* signal mutex semaphore */
+  multiprocessor_signal (mbox->item_available);				/* signal item available semaphore */
 }
 
 
@@ -110,13 +110,13 @@ void mailbox_send (mailbox *mbox, int result, int move_no, int positions_explore
 void mailbox_rec (mailbox *mbox,
 		  int *result, int *move_no, int *positions_explored)
 {
-  multiprocessor_wait (mbox->item_available);
-  multiprocessor_wait (mbox->mutex);
+  multiprocessor_wait (mbox->item_available);				/* wait for item available semaphore */
+  multiprocessor_wait (mbox->mutex);					/* wait for mutex semaphore */
   //remove item from buffer to nextc
-  *result = mbox->data[mbox->out].result;
-  *move_no = mbox->data[mbox->out].move_no;
-  *positions_explored = mbox->data[mbox->out].positions_explored;
-  mbox->out = (mbox->out + 1) % MAX_MAILBOX_DATA;
-  multiprocessor_signal (mbox->mutex);
-  multiprocessor_signal (mbox->space_available);
+  *result = mbox->data[mbox->out].result;				/* receive result from buffer and pass back */
+  *move_no = mbox->data[mbox->out].move_no;				/* receive move_no from buffer and pass back */
+  *positions_explored = mbox->data[mbox->out].positions_explored;	/* receive positions_explored from buffer and pass back */
+  mbox->out = (mbox->out + 1) % MAX_MAILBOX_DATA;			/* increment out upto 100 and reset */
+  multiprocessor_signal (mbox->mutex);					/* signal mutex semaphore */
+  multiprocessor_signal (mbox->space_available);			/* signal space available semaphore */
 }
