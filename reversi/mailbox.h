@@ -19,7 +19,7 @@
 
 #include "multiprocessor.h"
 
-#define MAX_MAILBOX_DATA 100
+#define MAX_MAILBOX_DATA 100 /* defining the max number of mailbox data */
 
 typedef struct triple_t {
   int result;
@@ -29,8 +29,8 @@ typedef struct triple_t {
 
 
 typedef struct mailbox_t {
-  triple data[MAX_MAILBOX_DATA];
-  int in, out;
+  triple data[MAX_MAILBOX_DATA]; /* converting data into struct*/
+  int in, out; 		    /* variables used for access within mailbox */
   sem_t *item_available;    /* are there data in the mailbox?  */
   sem_t *space_available;   /* space for more data in the mailbox.  */
   sem_t *mutex;             /* access to the mailbox.  */
