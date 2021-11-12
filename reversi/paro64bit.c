@@ -691,23 +691,23 @@ int parallelSearch (int *totalExplored, int *move,
   /* here we create a source and sink process, the source continually forks children
      one for every move, providing a processor is available. The sink collects the
      results and ultimately returns the best move. */
-  int pid = fork ();
+  int pid = fork ();		/* fork process */
 
-  if (pid == 0)
+  if (pid == 0)			/* if child */
     {
-      int i, move_score;
+      int i, move_score;	/* instantiate variables for use within child */
       /*child is the source which spawns each move on a separate core. */
-      for (i=0; i < noOfMoves; i++)
+      for (i=0; i < noOfMoves; i++)	/* for loop upto the number supplied */
 	{
-	  multiprocessor_wait (processorAvailable);
-          if (fork () == 0)
+	  multiprocessor_wait (processorAvailable); 		/* wait for processor to be available */
+          if (fork () == 0)					
 	    {
 	      /*child must search move i.*/
-	      move_score = alphaBeta (l[i], c, u, noPlies, o, minscore, maxscore);
-	      // printf ("%d\n", move_score);
+	      move_score = alphaBeta (l[i], c, u, noPlies, o, minscore, maxscore); /* set value of move score by alphaBeta */
+	      // printf ("%d\n", move_score); /* deprecated debugging */
 	      //pass move_score, i, positionsExplored back via mailbox
-	      mailbox_send (barrier, move_score, i, positionsExplored);
-	      multiprocessor_signal (processorAvailable);
+	      mailbox_send (barrier, move_score, i, positionsExplored);		/* pass values into mailbox system */
+	      multiprocessor_signal (processorAvailable);			/* signal processor available */
 	      exit(0);
 	    }
       	}
@@ -717,24 +717,24 @@ int parallelSearch (int *totalExplored, int *move,
     {
       /*parent is the sink, which waits for any move to be returned and
 	remembers the best move score.*/
-      int i, move_score, move_index, positions_explored;
+      int i, move_score, move_index, positions_explored;	/* instantiate variables for use within parent */
 
-      for (i=0; i < noOfMoves; i++)
+      for (i=0; i < noOfMoves; i++)				/* for loop upto the number supplied */
 	{
 	  printf ("parent waiting for a result\n");
-	  mailbox_rec (barrier, &move_score, &move_index, &positions_explored);
+	  mailbox_rec (barrier, &move_score, &move_index, &positions_explored); 	/* retrieve data from mailbox system */
 	  printf (" ... parent has received a result: move %d has a score of %d after exploring %d positions\n",
 		  move_index, move_score, positions_explored);
 	  *totalExplored += positions_explored; /* add count to the running total */
-	  if (move_score > best)
+	  if (move_score > best) 		/* improve result to be returned if retrieved data is better */
 	    {
 	      best = move_score;
-	      *move = l[move_index];
+	      *move = l[move_index];		/* update move for computer */
 	    }
 	}
     }
 
-  return best;
+  return best;					/* return best result retrieved by mailbox system */
 }
 #endif
 
